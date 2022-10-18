@@ -301,7 +301,7 @@ func GetDefaultInterfaces() (IfAddrs, error) {
 //
 // ```
 // $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "default,type,size" | include "RFC" "6890" }}'
-// / ```
+/// ```
 func GetPrivateInterfaces() (IfAddrs, error) {
 	privateIfs, err := GetAllInterfaces()
 	if err != nil {
@@ -332,21 +332,10 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 
 	OrderedIfAddrBy(AscIfDefault, AscIfType, AscIfNetworkSize).Sort(privateIfs)
 
-	privateIfs, remainder, err := IfByRFC("6890", privateIfs)
+	privateIfs, _, err = IfByRFC("6890", privateIfs)
 	if err != nil {
 		return IfAddrs{}, err
-	}
-	if len(remainder) > 0 {
-		occupied := SockAddrs{
-			MustIPv4Addr("172.240.0.0/16"),
-		}
-		matched, _ := IfByOccupy(remainder, occupied)
-		if len(matched) > 0 {
-			privateIfs = append(privateIfs, matched...)
-		}
-	}
-
-	if len(privateIfs) == 0 {
+	} else if len(privateIfs) == 0 {
 		return IfAddrs{}, nil
 	}
 
@@ -360,7 +349,7 @@ func GetPrivateInterfaces() (IfAddrs, error) {
 //
 // ```
 // $ sockaddr eval -r '{{GetAllInterfaces | include "type" "ip" | include "flags" "forwardable" | include "flags" "up" | sort "default,type,size" | exclude "RFC" "6890" }}'
-// / ```
+/// ```
 func GetPublicInterfaces() (IfAddrs, error) {
 	publicIfs, err := GetAllInterfaces()
 	if err != nil {
@@ -1225,13 +1214,14 @@ func parseDefaultIfNameFromIPCmd(routeOut string) (string, error) {
 // Android.
 func parseDefaultIfNameFromIPCmdAndroid(routeOut string) (string, error) {
 	parsedLines := parseIfNameFromIPCmd(routeOut)
-	if len(parsedLines) > 0 {
+	if (len(parsedLines) > 0) {
 		ifName := strings.TrimSpace(parsedLines[0][4])
 		return ifName, nil
 	}
 
 	return "", errors.New("No default interface found")
 }
+
 
 // parseIfNameFromIPCmd parses interfaces from ip(8) for
 // Linux.
